@@ -1,0 +1,6 @@
+{
+  "AutoCutoffSettings": {
+    "PCSUrl": "http://localhost",
+    "MainSecret": "AVALIDSECRET"
+  }
+}

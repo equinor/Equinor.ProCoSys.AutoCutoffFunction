@@ -28,11 +28,11 @@ namespace Equinor.ProCoSys.AutoCutoffFunction
             logger.LogInformation($"MainSecret: {mainSecret.Substring(0, 3)}xxxxxx");
 
             var url = $"{pcsUrl.TrimEnd('/')}/runjob/RunAllCutoffAnonymous?key={mainSecret}";
-            var result = await CutoffRunner.RunAsync(url);
+            var result = await AutoCutoffRunner.RunAsync(url);
 
             if (result != HttpStatusCode.NoContent)
             {
-                // todo 
+                throw new Exception($"AutoCutoffTrigger trigger didn't exit with expected code {HttpStatusCode.NoContent}");
             }
 
             logger.LogInformation($"Finished AutoCutoffTrigger trigger at: {DateTime.Now}.");

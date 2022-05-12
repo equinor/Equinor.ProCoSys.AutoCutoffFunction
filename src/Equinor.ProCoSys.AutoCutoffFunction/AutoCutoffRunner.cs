@@ -1,5 +1,4 @@
-﻿using System;
-using System.Net;
+﻿using System.Net;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
@@ -10,7 +9,7 @@ namespace Equinor.ProCoSys.AutoCutoffFunction
     {
         public static async Task<HttpStatusCode> RunAsync(string url, CancellationToken cancellationToken = default(CancellationToken))
         {
-            using (HttpClient client = new HttpClient())
+            using (var client = new HttpClient())
             {
                 var response = await client.GetAsync(url, cancellationToken);
                 return response.StatusCode;

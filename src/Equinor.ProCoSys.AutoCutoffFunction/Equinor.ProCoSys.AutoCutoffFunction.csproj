@@ -7,6 +7,9 @@
     <UserSecretsId>76251825-95f9-4885-8a13-34f3b617721e</UserSecretsId>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Remove="Startup.cs" />
+  </ItemGroup>
+  <ItemGroup>
     <PackageReference Include="Microsoft.ApplicationInsights" Version="2.20.0" />
     <PackageReference Include="Microsoft.ApplicationInsights.WorkerService" Version="2.20.0" />
     <PackageReference Include="Microsoft.Azure.Functions.Extensions" Version="1.1.0" />

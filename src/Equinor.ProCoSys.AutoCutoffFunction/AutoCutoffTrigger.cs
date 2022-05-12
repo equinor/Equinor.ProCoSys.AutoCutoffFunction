@@ -32,7 +32,7 @@ namespace Equinor.ProCoSys.AutoCutoffFunction
 
             if (result != HttpStatusCode.NoContent)
             {
-                throw new Exception($"AutoCutoffTrigger trigger didn't exit with expected code {HttpStatusCode.NoContent}");
+                throw new Exception($"AutoCutoffTrigger trigger didn't exit with expected code {HttpStatusCode.NoContent}. Got code {result}");
             }
 
             logger.LogInformation($"Finished AutoCutoffTrigger trigger at: {DateTime.Now}.");

@@ -1,6 +1,9 @@
 {
+  "Values": {
+    "Schedule": "*/10 * * * * *"
+  },
   "AutoCutoffSettings": {
-    "PCSUrl": "http://localhost",
+    "PCSUrl": "http://localhost:44301",
     "MainSecret": "AVALIDSECRET"
   }
 }

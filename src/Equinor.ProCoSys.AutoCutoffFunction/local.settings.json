@@ -4,5 +4,9 @@
     "AzureWebJobsStorage": "UseDevelopmentStorage=true",
     "FUNCTIONS_WORKER_RUNTIME": "dotnet",
     "Schedule": "*/10 * * * * *"
+  },
+  "AutoCutoffSettings": {
+    "PCSUrl": "https://localhost:44301/",
+    "MainSecret": "AVALIDSECRET"
   }
 }

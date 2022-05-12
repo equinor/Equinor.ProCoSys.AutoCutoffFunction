@@ -15,15 +15,9 @@ namespace Equinor.ProCoSys.AutoCutoffFunction
 
             var config = new ConfigurationBuilder()
                 .SetBasePath(Directory.GetCurrentDirectory())
-                .AddJsonFile("settings.json", false)
-                .AddJsonFile("local.settings.json", true, true)
+                .AddJsonFile("local.settings.json", true)
                 .AddUserSecrets("76251825-95f9-4885-8a13-34f3b617721e", true)
                 .Build();
-
-            //services.AddOptions<AutoCutoffSettings>().Configure<IConfiguration>((settings, configuration) =>
-            //{
-            //    configuration.GetSection("AutoCutoffSettings");
-            //});
 
             services.Configure<AutoCutoffSettings>(config.GetSection("AutoCutoffSettings"));
         }

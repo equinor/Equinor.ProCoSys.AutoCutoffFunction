@@ -59,7 +59,7 @@ stages:
       dockerRegistryServiceConnection: '$(dockerRegistryServiceConnectionName)'
 
 - stage: test
-  displayName: 'test'
+  displayName: 'Test'
   dependsOn: 'build'
   condition: and(succeeded(), ne(variables['Build.SourceBranch'], 'refs/heads/master'))
   variables:
@@ -81,4 +81,4 @@ stages:
       functionApp: '${{ variables.appName }}'
       kvName: '${{ variables.kvName }}'
       rgName: '${{ variables.rgName }}'
-      repository: ${{ variables.repositoryName }}
+      repository: '${{ variables.repositoryName }}'

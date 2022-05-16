@@ -58,6 +58,7 @@ stages:
       repository: '${{ variables.repositoryName }}'
       dockerRegistryServiceConnection: '$(dockerRegistryServiceConnectionName)'
 
+# Deploy Stage
 - stage: test
   displayName: 'Test'
   dependsOn: 'build'

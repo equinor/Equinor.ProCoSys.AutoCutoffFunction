@@ -11,6 +11,7 @@ resources:
      type: github
      name: equinor/procosys-infra
      endpoint: 'equinor'
+     ref: 91484_autocutoff_infrastructure
 
 # Global variables for the pipeline
 variables:

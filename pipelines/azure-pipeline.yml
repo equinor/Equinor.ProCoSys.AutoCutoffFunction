@@ -5,13 +5,12 @@ trigger:
       - dev
 
 resources:
-   repositories:
-   - repository: self
-   - repository: templates
-     type: github
-     name: equinor/procosys-infra
-     endpoint: 'equinor'
-     ref: 91484_autocutoff_infrastructure
+  repositories:
+  - repository: self
+  - repository: templates
+    type: github
+    name: equinor/procosys-infra
+    endpoint: 'equinor'
 
 # Global variables for the pipeline
 variables:
@@ -19,116 +18,67 @@ variables:
   - template: src/resources/autocutoff/autocutoff-variables.yml@templates
   - name: 'repositoryName'
     value: 'autocutoff/autocutoff-function'
-  - name: 'buildConfiguration'
-    value: 'Release' 
-  - name: 'vmImageName'
-    value: 'ubuntu-latest'
 
 stages:
- - stage: "CI"
-   displayName: 'Build and Test'
-   jobs:
-   - job:
-     pool:
-       vmImage: $(vmImageName)
+# Build stage. Docker build, tag and push
+- stage: build
+  displayName: 'Build'
+  dependsOn: ''
+  variables:
+    envName: 'build'
+    containerRegistry: '${{ variables.containerRegistryName }}'
+    envGroupName: '$(globalPrefix)-$(fullAppName)-func-${{ variables.envName }}'
+    dockerfilePath: '$(Build.SourcesDirectory)/src/Equinor.ProCoSys.AutoCutoffFunction/Dockerfile'
 
-     steps:
-     - task: NuGetToolInstaller@1
+  jobs:
+  # Docker Build
+  - template: /src/resources/autocutoff/jobs/dockerbuild.yml@templates
+    parameters:
+      deploymentName: 'docker_build'
+      dependsOn: ''
+      condition: and(always(), eq(variables['Build.Reason'], 'PullRequest'))
+      envGroup: '${{ variables.envGroupName }}'
+      buildCommand: build
+      dockerfilePath: '${{ variables.dockerfilePath }}'
+      buildContext: '$(Build.SourcesDirectory)/src'
+      repository: '${{ variables.repositoryName }}'
+      dockerRegistryServiceConnection: '$(dockerRegistryServiceConnectionName)'
 
-     - task: NuGetCommand@2
-       inputs:
-         command: 'restore'
-         feedsToUse: 'config'
-         nugetConfigPath: 'nuget.config'
+  # Docker Build and Push
+  - template: /src/resources/autocutoff/jobs/dockerbuild.yml@templates
+    parameters:
+      deploymentName: 'docker_build_and_push'
+      dependsOn: ''
+      condition: and(always(), ne(variables['Build.Reason'], 'PullRequest'))
+      envGroup: '${{ variables.envGroupName }}'
+      buildCommand: buildAndPush
+      dockerfilePath: '${{ variables.dockerfilePath }}'
+      buildContext: '$(Build.SourcesDirectory)/src'
+      repository: '${{ variables.repositoryName }}'
+      dockerRegistryServiceConnection: '$(dockerRegistryServiceConnectionName)'
 
-     - script: dotnet build --configuration $(buildConfiguration)
-       displayName: 'dotnet build $(buildConfiguration)'
-    
-     - task: DotNetCoreCLI@2
-       displayName: 'dotnet test $(buildConfiguration)'
-       inputs:
-         command: test
-         projects: '**/*[Tt]ests/*.csproj'
-         arguments: '--configuration $(buildConfiguration)'
-
- # common stage. Docker build, tag and push
- - stage: common
-   displayName: 'Common'
-   dependsOn: 'CI'
-   condition:  |
-     and
-     (
-       succeeded(),
-       or
-       ( 
-         eq(variables['Build.SourceBranch'], 'refs/heads/master'),
-         eq(variables['Build.SourceBranch'], 'refs/heads/dev')
-       )
-     )
-   variables:
-     envName: 'common'
-     envRg: '${{ variables.envRgName }}'
-     containerRegistry: '${{ variables.containerRegistryName }}'
-     envGroupName: '$(globalPrefix)-$(fullAppName)-${{ variables.envName }}'
-     dockerRegistryServiceConnection: '$(dockerRegistryServiceConnectionName)'
-     dockerfilePath: '$(Build.SourcesDirectory)/Equinor.ProCoSys.AutoCutoffFunction/Dockerfile'
-
-   jobs:
-   - template: /src/resources/autocutoff/jobs/dockerbuild.yml@templates
-     parameters:
-       deploymentName: 'docker_build_push'
-       env: 'pcs-${{ variables.envName }}'
-#       nugetConfigPath: 'nuget.config'
-       envGroup: '${{ variables.envGroupName }}'
-       dockerfilePath: ${{ variables.dockerfilePath }}
-       buildContext: '$(Build.SourcesDirectory)'
-       repository: ${{ variables.repositoryName }}
-       dockerRegistryServiceConnection: $(dockerRegistryServiceConnectionName)
-
- - stage: test
-   displayName: 'test'
-   dependsOn: 'common'
-   condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/dev'))
-   variables:
+# Deploy Stage
+- stage: test
+  displayName: 'Test'
+  dependsOn: 'build'
+  condition: and(succeeded(), ne(variables['Build.SourceBranch'], 'refs/heads/master'))
+  variables:
     envName: 'test'
+    envLabel: 'non-prod'
     serviceConnection: '${{ variables.nonProdServiceConnection }}'
-    envGroupName: '$(globalPrefix)-$(fullAppName)-${{ variables.envName }}'
-    envRg: 'pcs-autocutoff-non-prod-rg'
+    envGroupName: '$(globalPrefix)-$(fullAppName)-func-${{ variables.envName }}'
+    rgName: '${{ variables.envRgName }}'
 
-   jobs:
-   - template: /src/resources/autocutoff/jobs/deploy-function.yml@templates
-     parameters:
+  jobs:
+  - template: /src/resources/autocutoff/jobs/deploy-function.yml@templates
+    parameters:
       dependsOn: ''
-      deploymentName: 'publish'
+      deploymentName: 'deploy_function'
       serviceConnection: ${{ variables.serviceConnection }}
-      functionApp: '$(globalPrefix)-$(fullAppName)-test-func'
       envGroup: '${{ variables.envGroupName }}'
-      rgName: '${{ variables.envRg }}'
-      env: '${{ variables.envName }}'
-      repository: ${{ variables.repositoryName }}
+      envName: '${{ variables.envName }}'
       containerRegistry: '${{ variables.containerRegistry }}'
-      keyVaultUrl: 'pcs-aco-non-prod-kv'
-
- - stage: prod
-   displayName: 'prod'
-   dependsOn: 'common'
-   condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
-   variables:
-    envName: 'prod'
-    serviceConnection: '${{ variables.prodServiceConnection }}'
-    envGroupName: '$(globalPrefix)-$(fullAppName)-${{ variables.envName }}'
-    envRg: 'pcs-autocutoff-prod-rg'
-  
-   jobs:
-   - template: /src/resources/autocutoff/jobs/deploy-function.yml@templates
-     parameters:
-      dependsOn: ''
-      deploymentName: 'publish'
-      serviceConnection: ${{ variables.serviceConnection }}
-      functionApp: '$(globalPrefix)-$(fullAppName)-prod-func'
-      envGroup: '${{ variables.envGroupName }}'
-      rgName: '${{ variables.envRg }}'
-      env: '${{ variables.envName }}'
-      repository: ${{ variables.repositoryName }}
-      containerRegistry: '${{ variables.containerRegistry }}'
-      keyVaultUrl: 'pcs-aco-prod-kv'
+      functionApp: '${{ variables.appName }}'
+      kvName: '${{ variables.kvName }}'
+      rgName: '${{ variables.rgName }}'
+      repository: '${{ variables.repositoryName }}'

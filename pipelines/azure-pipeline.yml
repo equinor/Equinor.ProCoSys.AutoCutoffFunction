@@ -68,7 +68,7 @@ stages:
     serviceConnection: '${{ variables.nonProdServiceConnection }}'
     envGroupName: '$(globalPrefix)-$(fullAppName)-func-${{ variables.envName }}'
     rgName: '${{ variables.envRgName }}'
- 
+
   jobs:
   - template: /src/resources/autocutoff/jobs/deploy-function.yml@templates
     parameters:
@@ -85,16 +85,16 @@ stages:
 
 # Deploy Stage PROD
 - stage: prod
-  displayName: 'prod'
+  displayName: 'Prod'
   dependsOn: 'build'
   condition: and(succeeded(), ne(variables['Build.SourceBranch'], 'refs/heads/master'))
   variables:
     envName: 'prod'
     envLabel: 'prod'
-    serviceConnection: '${{ variables.ProdServiceConnection }}'
+    serviceConnection: '${{ variables.prodServiceConnection }}'
     envGroupName: '$(globalPrefix)-$(fullAppName)-func-${{ variables.envName }}'
     rgName: '${{ variables.envRgName }}'
- 
+
   jobs:
   - template: /src/resources/autocutoff/jobs/deploy-function.yml@templates
     parameters:

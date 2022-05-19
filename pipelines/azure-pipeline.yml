@@ -57,7 +57,7 @@ stages:
       repository: '${{ variables.repositoryName }}'
       dockerRegistryServiceConnection: '$(dockerRegistryServiceConnectionName)'
 
-# Deploy Stage
+# Deploy Stage TEST
 - stage: test
   displayName: 'Test'
   dependsOn: 'build'
@@ -68,7 +68,33 @@ stages:
     serviceConnection: '${{ variables.nonProdServiceConnection }}'
     envGroupName: '$(globalPrefix)-$(fullAppName)-func-${{ variables.envName }}'
     rgName: '${{ variables.envRgName }}'
+ 
+  jobs:
+  - template: /src/resources/autocutoff/jobs/deploy-function.yml@templates
+    parameters:
+      dependsOn: ''
+      deploymentName: 'deploy_function'
+      serviceConnection: ${{ variables.serviceConnection }}
+      envGroup: '${{ variables.envGroupName }}'
+      envName: '${{ variables.envName }}'
+      containerRegistry: '${{ variables.containerRegistry }}'
+      functionApp: '${{ variables.appName }}'
+      kvName: '${{ variables.kvName }}'
+      rgName: '${{ variables.rgName }}'
+      repository: '${{ variables.repositoryName }}'
 
+# Deploy Stage PROD
+- stage: prod
+  displayName: 'prod'
+  dependsOn: 'build'
+  condition: and(succeeded(), ne(variables['Build.SourceBranch'], 'refs/heads/master'))
+  variables:
+    envName: 'prod'
+    envLabel: 'prod'
+    serviceConnection: '${{ variables.ProdServiceConnection }}'
+    envGroupName: '$(globalPrefix)-$(fullAppName)-func-${{ variables.envName }}'
+    rgName: '${{ variables.envRgName }}'
+ 
   jobs:
   - template: /src/resources/autocutoff/jobs/deploy-function.yml@templates
     parameters:
